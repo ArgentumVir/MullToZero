@@ -1,14 +1,14 @@
 <!doctype html>
 <html>
 <body>
-<div class="container">
+<div class="container" ng-controller="accountController" ng-init="accountInit()">
 
 <div class="col-sm-6 col-sm-offset-3">
 
     <h1><span class="fa fa-sign-in"></span> Login</h1>
 
     <!-- show any messages that come back with authentication -->
-        <div class="alert alert-danger">[[PlaceHolder]]</div>
+        <div class="alert alert-danger" style="display: none" name="error"></div>
 
     <!-- LOGIN FORM -->
     <form action="/login" method="post">
@@ -26,7 +26,7 @@
 
     <hr>
 
-    <p>Need an account? <a href="/signup">Signup</a></p>
+    <p>Need an account? <a href="#/signup">Signup</a></p>
     <p>Or go <a href="/">home</a>.</p>
 
 </div>

@@ -24,7 +24,7 @@ angular
       .when('/', {
         templateUrl: 'modules/core/views/welcome.html'
       }) 
-      .when('/login', {
+      .when('/login/', {
         templateUrl: 'modules/account/views/login.html',
         controller: 'accountController'
       })
