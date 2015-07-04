@@ -24,7 +24,7 @@ angular
       .when('/', {
         templateUrl: 'modules/core/views/welcome.html'
       }) 
-      .when('/login/', {
+      .when('/login', {
         templateUrl: 'modules/account/views/login.html',
         controller: 'accountController'
       })
@@ -32,7 +32,7 @@ angular
         templateUrl: 'modules/account/views/signup.html',
         controller: 'accountController'
       })
-      .when('/profile/:iduser', {
+      .when('/profile', {
         templateUrl: 'modules/account/views/profile.html',
         controller: 'accountController'
       })
@@ -43,15 +43,4 @@ angular
       .otherwise({
         redirectTo: '/'
       });
-  })/*
-  .controller('accountController', ['$scope', '$rootScope', '$http', '$route', 
-  function($scope, $rootScope, $http, $route) {
-    $scope.accountInit = function () {
-      $scope.loginMessage = "sure";
-    };
-  }
-])
-  .controller('decksController', ['$scope', '$rootScope', '$http',
-  function($scope,  $rootScope, $http) {
-  }
-])*/;
+  });

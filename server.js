@@ -1,5 +1,6 @@
 // Package Dependencies
 var bodyParser = require('body-parser');
+var bcrypt   = require('bcrypt-nodejs');
 var cookieParser = require('cookie-parser');
 var express = require('express');
 var flash = require('connect-flash'); // Probobly won't need this one
@@ -41,11 +42,18 @@ app.use(flash());
 
 // Passport session setup #######################################################
 passport.serializeUser(function(user, done) {
-    done(null, user.id);
+    done(null, user.iduser);
 });
 
 passport.deserializeUser(function(id, done) {
-    connection.query("select * from user where id = " + id, function(err,rows){	
+    connection.query("SELECT * from `user` where `iduser` = " + id, function(err,rows){
+    	if(err) {
+			console.log("deserializeUser:" + err);
+			done(err, false); // Not sure I want to be returning false
+		} else if (!rows.length){
+			console.log("deserializeUser: User's id not found");
+			done(err, false); 
+		}
 		done(err, rows[0]);
 	});
 });
@@ -57,38 +65,35 @@ passport.use('localSignup', new localStrategy({
     passReqToCallback : true
 },
 function(req, email, password, done) {
-	console.log(email);
-	console.log(password);
 	email = email.toLowerCase();
-	console.log("SIGNUP: DEBUG FLAG 0");
-	// Check if email already exists
-    /*connection.query("select * from user where email = '" + email + "'", function(err,rows){
-    	console.log("SIGNUP: DEBUG FLAG 0.5");
-		if (err){
-			console.log("SIGNUP: " + err);
-            return done(err);
-        }
-		 if (rows.length) {
-		 	console.log("SIGNUP: Username is already taken");
-            return done(null, false);
-        } else {*/
-			// Create user if email not taken
-			console.log("SIGNUP: DEBUG FLAG 1");
-            var newUserMysql = new Object();
-			
-			console.log("SIGNUP: DEBUG FLAG 2");
-			newUserMysql.email    = email;
-			console.log("SIGNUP: DEBUG FLAG 3");
-            newUserMysql.password = bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
-			console.log("SIGNUP: DEBUG FLAG 4");
-			var insertQuery = "INSERT INTO user ( email, password ) values ('" + email + "','" + password + "')";
-			console.log(insertQuery);
-			connection.query(insertQuery,function(err,rows){
-				console.log("SIGNUP: Success");
-				return done(null, newUserMysql);
-        	});
+    var newUser = new Object();
+	
+	newUser.email    = email;
+    newUser.password = bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+
+    // Put user into database
+	var insertQuery = "INSERT INTO user ( email, password ) values ('" + email + "','" + newUser.password + "')";
+	connection.query(insertQuery,function(err,rows){
+		if(err) {
+			console.log("localSignup - insertQuery:" + err);
+		} else {
+			console.log("localSignup: User successfully added to database");
+		}
+	});
+
+	// get generated user id for serialization purposes
+	connection.query("SELECT * FROM `user` WHERE `email` = '" + email + "'", function(err,rows){
+		if(err) {
+			console.log("localSignup - idQuery:" + err);
+		} else if (!rows.length){
+			console.log("localSignup - idQuery: User's id not found");
+			return done(null, false);
+		}
+		newUser.iduser = rows[0].iduser;
+		return done(null, newUser);
+	});
 }));
-	//});
+
 // Local Login #######################################################
 passport.use('localLogin', new localStrategy({
     usernameField : 'email',
@@ -97,34 +102,54 @@ passport.use('localLogin', new localStrategy({
 },
 function(req, email, password, done) {
 	email = email.toLowerCase();
-     connection.query("SELECT * FROM `user` WHERE `email` = '" + email + "'", function(err,rows){
-		if (err)
+
+	// Checks if username/password are correct
+    connection.query("SELECT * FROM `user` WHERE `email` = '" + email + "'", function(err,rows){
+		if (err){
+			console.log("localLogin:" + err);
             return done(err);
+        }
 		 if (!rows.length) {
 		 	// Username not found
             return done(null, false);
         } 
-		
-        if (!( rows[0].password == password)){
+        if (!(bcrypt.compareSync(password, rows[0].password))){
+        	console.log("WRONG PASSWORD STILL NERD JESUS");
         	//Password incorrect
             return done(null, false);
         }
-		
         // Success
         return done(null, rows[0]);					
 	});
 }));
 
 // Passport routes #######################################################
+app.post('/login',
+  passport.authenticate('localLogin'),
+  function(req, res) {
+    // `req.user` contains the authenticated user.
+    //res.redirect('/users/' + req.user.username);
+    res.redirect('/#/profile');
+  });
+
 app.get('/logout', function(req, res){
 	req.logout();
 	res.redirect('/');
 });
 
-app.post('/signup', passport.authenticate('localSignup', {
-    successRedirect : '/#/profile',
-    failureRedirect : '/#/signup',
-}));
+app.post('/signup', function(req, res, next) {
+  passport.authenticate('localSignup', function(err, user, info) {
+    if (err) {
+      	return next(err); // will generate a 500 error
+    }
+    if (!user) {
+    	console.log("Auth FAILURE");
+     	res.redirect('/#/signup');
+    }
+    console.log("Auth SUCCESS");
+    res.redirect('/#/profile');
+  })(req, res, next);
+});
 
 // General authentication functions #######################################################
 function isLoggedIn(req, res, next) {
@@ -136,24 +161,20 @@ function isLoggedIn(req, res, next) {
 }
 
 // Local authentication routes #######################################################
-app.post('/login',
-  passport.authenticate('local'),
-  function(req, res) {
-    // If this function gets called, authentication was successful.
-    // `req.user` contains the authenticated user.
-    res.redirect('/users/' + req.user.username);
-  });
-
 app.post('/signupCheck', function(req, res){
-	email = req.body;
-	connection.query("select * from user where email = '" + email + "'", function(err,rows){
+
+	// Uses regex to extract email address from JSON object
+	var email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b/.exec(JSON.stringify(req.body));
+
+	connection.query("select * from user where email = '" + email[0] + "'", function(err,rows){
 		if (err){
 			console.log("signupCheck: " + err);
         } 
         else if (rows.length) {
-		 	console.log("SIGNUP: Username is already taken.");
+        	// username taken
             res.send(true);
         } else {
+        	// username free
         	res.send(false);
         }
     })
