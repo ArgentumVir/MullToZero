@@ -1,3 +1,4 @@
+'use strict';
 // Package Dependencies
 var bodyParser = require('body-parser');
 var bcrypt   = require('bcrypt-nodejs');
@@ -38,14 +39,17 @@ app.set('view engine', 'ejs');
 app.use(session({secret: config.sessionSecret}));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(flash());
+//app.use(flash());
+app.use(express.static('./public'));
 
 // Passport session setup #######################################################
 passport.serializeUser(function(user, done) {
+    console.log("SERIALIZED");
     done(null, user.iduser);
 });
 
 passport.deserializeUser(function(id, done) {
+    console.log("DESERIALIZED");
     connection.query("SELECT * from `user` where `iduser` = " + id, function(err,rows){
     	if(err) {
 			console.log("deserializeUser:" + err);
@@ -66,12 +70,12 @@ passport.use('localSignup', new localStrategy({
 },
 function(req, email, password, done) {
 	email = email.toLowerCase();
-    var newUser = new Object();
+  var newUser = new Object();
 	
 	newUser.email    = email;
-    newUser.password = bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+  newUser.password = bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 
-    // Put user into database
+  // Put user into database
 	var insertQuery = "INSERT INTO user ( email, password ) values ('" + email + "','" + newUser.password + "')";
 	connection.query(insertQuery,function(err,rows){
 		if(err) {
@@ -107,34 +111,35 @@ function(req, email, password, done) {
     connection.query("SELECT * FROM `user` WHERE `email` = '" + email + "'", function(err,rows){
 		if (err){
 			console.log("localLogin:" + err);
-            return done(err);
-        }
-		 if (!rows.length) {
-		 	// Username not found
-            return done(null, false);
-        } 
-        if (!(bcrypt.compareSync(password, rows[0].password))){
-        	console.log("WRONG PASSWORD STILL NERD JESUS");
-        	//Password incorrect
-            return done(null, false);
-        }
-        // Success
-        return done(null, rows[0]);					
+      return done(err);
+    }
+		if (!rows.length) {
+	 	  // Username not found
+      console.log("localLogin - usernameCheck: Email not found. ");
+      return done(null, false);
+    } 
+    if (!(bcrypt.compareSync(password, rows[0].password))){
+    	//Password incorrect
+      console.log("localLogin - passwordCheck: Passwords do not match. ");
+      return done(null, false);
+    }
+    // Success
+    return done(null, rows[0]);					
 	});
 }));
 
 // Passport routes #######################################################
-app.post('/login',
-  passport.authenticate('localLogin'),
-  function(req, res) {
-    // `req.user` contains the authenticated user.
-    //res.redirect('/users/' + req.user.username);
-    res.redirect('/#/profile');
-  });
-
-app.get('/logout', function(req, res){
-	req.logout();
-	res.redirect('/');
+app.post('/login', function(req, res, next) {
+  passport.authenticate('localLogin', function(err, user, info) {
+  	if(err){
+  		return next(err); // will generate a 500 error
+  	}
+  	if(!user){
+  		res.send('/#/login');
+  	} else {
+  		res.send('/#/profile');
+    }
+  })(req, res, next);
 });
 
 app.post('/signup', function(req, res, next) {
@@ -143,30 +148,45 @@ app.post('/signup', function(req, res, next) {
       	return next(err); // will generate a 500 error
     }
     if (!user) {
-    	console.log("Auth FAILURE");
-     	res.redirect('/#/signup');
+     	res.send('/#/signup');
+    } else {
+      res.send('/#/profile');
     }
-    console.log("Auth SUCCESS");
-    res.redirect('/#/profile');
   })(req, res, next);
+});
+
+app.get('/logout', function(req, res){
+  req.logout();
+  res.redirect('/');
+});
+
+app.get('/authCheck', function(req, res){
+  console.log(req.isAuthenticated());
+  console.log(req.user);
+  console.log(req.session);
+  if(req.user){
+    console.log("Logged in");
+    res.send(true);
+  } else {
+    console.log("NOT Logged in");
+    res.send(false);
+  }
 });
 
 // General authentication functions #######################################################
 function isLoggedIn(req, res, next) {
-
-    if (req.isAuthenticated())
-        return next();
-
-    res.redirect('/');
+    if (req.isAuthenticated()) {
+      console.log(next);
+      return next();
+    } else {
+      res.redirect('/');
+    }
 }
 
 // Local authentication routes #######################################################
 app.post('/signupCheck', function(req, res){
 
-	// Uses regex to extract email address from JSON object
-	var email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b/.exec(JSON.stringify(req.body));
-
-	connection.query("select * from user where email = '" + email[0] + "'", function(err,rows){
+	connection.query("select * from user where email = '" + req.body.email + "'", function(err,rows){
 		if (err){
 			console.log("signupCheck: " + err);
         } 
@@ -177,12 +197,30 @@ app.post('/signupCheck', function(req, res){
         	// username free
         	res.send(false);
         }
-    })
+    });
+});
+
+app.post('/loginCheck', function(req, res){
+  // Checks if username/password are correct
+    connection.query("SELECT * FROM `user` WHERE `email` = '" + req.body.email + "'", function(err,rows){
+    if (err){
+      console.log("loginCheck: " + err);
+        }
+    if (!rows.length) {
+      // Username not found
+      res.send(false);      
+      } 
+    if (!(bcrypt.compareSync(req.body.password, rows[0].password))){
+      //Password incorrect
+      res.send(false);  
+    } else {
+    // Success
+    res.send(true);     
+    }  
+  });
 });
 
 
 
-
-app.use(express.static('./public'));
 app.listen(config.port); // For local testing port is '8080'
 console.log("Active port is: " + config.port);
