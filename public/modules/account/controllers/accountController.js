@@ -38,11 +38,20 @@ angular
 						showError(errorMessage, "Email is already in use.");
 					} else {
 						$http.post('/signup', combinedStringJSON).success(function(data) {
+							// Global work around is probably not the best idea
+							$rootScope.$broadcast('userLoggedIn', {user: email});
 							window.location = data;
 						});			
 					}
 				});
 			}
+		};
+
+		//Debuggin function
+		$scope.checkAuth = function() {
+			$http.post('/authCheck').success(function(data) {
+				console.log(data);
+			});
 		};
 
 		$scope.login = function() {
@@ -67,7 +76,9 @@ angular
 					if(!data){
 						showError(errorMessage, "Invalid email or password. ");
 					} else {
-						$http.post('/login', combinedStringJSON).success(function(data, status, headers, config) {
+						$http.post('/login', combinedStringJSON).success(function(data) {
+							// Global work around is probably not the best idea
+							$rootScope.$broadcast('userLoggedIn', {user: email});
 							window.location = data;
 						});		
 					}
@@ -75,18 +86,9 @@ angular
 			}
 		};
 
-		$scope.checkAuth = function() {
-			$http.get('/authCheck').success(function(data, status, headers, config) {
-				console.log(data);
-			});	
-		};
-
 		function showError(errorMessage, errorString) {
     		errorMessage.style.display = "block";
     		errorMessage.innerHTML = errorString;
 		}
-
-
-
 	}
 ]);

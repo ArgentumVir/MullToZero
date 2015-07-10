@@ -10,7 +10,48 @@
 	<body ng-app="mullToZeroApp">
 		<div class="container">
 
-		    <div ng-include src="'modules/navigation/views/navbar.html'"></div>
+		    <!-- Static navbar -->
+		    <nav class="navbar navbar-default">
+			<div class="container-fluid">
+			    <div class="navbar-header">
+				<a class="navbar-brand" href="javascript:initXHR('home')">MullToZero</a>
+			    </div>
+			    <div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+				    <li><a href="#/">Home</a></li>
+				    <li><a href="#/select">Select a Deck</a></li>
+				    <li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Add Decks<span class="caret"></span></a>
+					<ul class="dropdown-menu" role="menu">
+					    <li><a href="#/create">Create</a></li>
+					    <li><a href="#/import">Import</a></li>
+					    <!--<li><a href="javascript:initXHR('lists')">Active</a></li>
+					    <li><a href="#">Disabled</a></li>-->
+					</ul>
+				    </li>
+				    <!--<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Shared<span class="caret"></span></a>
+					<ul class="dropdown-menu" role="menu">
+					    <li><a href="#">Active</a></li>
+					    <li><a href="#">Pending</a></li>
+					</ul>
+				    </li>-->
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+
+				<% if(checkAuth === true) { %>
+					<li><a href='#/profile'>Profile</a></li>
+					<li><a href='/logout'>Logout</a></li>
+				<% } %> 
+				<% else { %>
+					<li><a href="#/login">Login</a></li>
+				    <li><a href="#/signup">Sign Up</a></li>
+				<% } %>
+
+				</ul>
+			    </div><!--/.nav-collapse -->
+			</div><!--/.container-fluid -->
+		    </nav>
 
 		    <div ng-view=""></div>
 		    
@@ -33,6 +74,5 @@
 	<script src="modules/core/controllers/app.js"></script>
 	<script src="modules/account/controllers/accountController.js"></script>
 	<script src="modules/decks/controllers/decksController.js"></script>
-	<script src="modules/navigation/controllers/navigationController.js"></script>
 	</body>
 </html>

@@ -44,12 +44,10 @@ app.use(express.static('./public'));
 
 // Passport session setup #######################################################
 passport.serializeUser(function(user, done) {
-    console.log("SERIALIZED");
     done(null, user.iduser);
 });
 
 passport.deserializeUser(function(id, done) {
-    console.log("DESERIALIZED");
     connection.query("SELECT * from `user` where `iduser` = " + id, function(err,rows){
     	if(err) {
 			console.log("deserializeUser:" + err);
@@ -137,7 +135,13 @@ app.post('/login', function(req, res, next) {
   	if(!user){
   		res.send('/#/login');
   	} else {
-  		res.send('/#/profile');
+        req.login(user, function(err) {
+        if (err) {
+          console.log('/login - req.login: ' + err);
+          res.send('/#/login');
+        }
+        res.send('/#/select');
+       });
     }
   })(req, res, next);
 });
@@ -150,7 +154,13 @@ app.post('/signup', function(req, res, next) {
     if (!user) {
      	res.send('/#/signup');
     } else {
-      res.send('/#/profile');
+      req.login(user, function(err) {
+        if (err) {
+          console.log('/signup - req.login: ' + err);
+          res.send('/#/login');
+        }
+        res.send('/#/select');
+       });
     }
   })(req, res, next);
 });
@@ -160,15 +170,11 @@ app.get('/logout', function(req, res){
   res.redirect('/');
 });
 
-app.get('/authCheck', function(req, res){
-  console.log(req.isAuthenticated());
-  console.log(req.user);
-  console.log(req.session);
+app.post('/authCheck', function(req, res){
+
   if(req.user){
-    console.log("Logged in");
-    res.send(true);
+    res.send(req.user);
   } else {
-    console.log("NOT Logged in");
     res.send(false);
   }
 });
@@ -176,7 +182,6 @@ app.get('/authCheck', function(req, res){
 // General authentication functions #######################################################
 function isLoggedIn(req, res, next) {
     if (req.isAuthenticated()) {
-      console.log(next);
       return next();
     } else {
       res.redirect('/');
