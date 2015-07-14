@@ -24,10 +24,62 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err){
 	if(!err) {
-	    console.log("Database is connected...");  
-	} else {
-	    console.log("Error connecting database...");  
-	}
+	    console.log("Database is connected...");
+      // Check `user` table exists
+      connection.query("SELECT * FROM `user` LIMIT 1", function(err){
+        if (err){
+          console.log("sqlConnection - tableUser:" + err);
+          connection.query(config.createUserTable, function(err){
+              if (err){
+                console.log("sqlConnection - userTableCreation:" + err);
+              } else {
+                console.log("sqlConnection - userTableCreation: 'user' table created.");
+              }
+          }); 
+        }
+      });
+      // Check `card` table exists
+      connection.query("SELECT * FROM `card` LIMIT 1", function(err){
+        if (err){
+          console.log("sqlConnection - tableCard:" + err);
+          connection.query(config.createCardTable, function(err){
+              if (err){
+                console.log("sqlConnection - cardTableCreation:" + err);
+              } else {
+                console.log("sqlConnection - cardTableCreation: 'card' table created.");
+              }
+          });
+        } 
+      });
+      // Check `deck` table exists
+      connection.query("SELECT * FROM `deck` LIMIT 1", function(err){
+        if (err){
+          console.log("sqlConnection - tableDeck:" + err);
+          connection.query(config.createDeclTable, function(err){
+              if (err){
+                console.log("sqlConnection - deckTableCreation:" + err);
+              } else {
+                console.log("sqlConnection - deckTableCreation: 'deck' table created.");
+              }
+          });
+        } 
+      });
+      // Check `decklist` table exists
+      connection.query("SELECT * FROM `decklist` LIMIT 1", function(err){
+        if (err){
+          console.log("sqlConnection - tableDeckList:" + err);
+          connection.query(config.createDeckListTable, function(err){
+              if (err){
+                console.log("sqlConnection - deckLIstTableCreation:" + err);
+              } else {
+                console.log("sqlConnection - deckListTableCreation: 'decklist' table created.");
+              }
+          });
+        } 
+      });
+  	} else {
+  	    console.log("Error connecting database...");  
+  	}
 });
 
 app.use(morgan('dev'));

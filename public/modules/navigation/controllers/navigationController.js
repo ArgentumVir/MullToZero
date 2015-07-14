@@ -20,6 +20,8 @@
         		document.getElementById("signup").style.display = "none";
         		document.getElementById("logout").style.display = "block";
         		document.getElementById("profile").style.display = "block";
+        		document.getElementById("select").style.display = "block";
+        		document.getElementById("add").style.display = "block";
         		document.getElementById("profile").innerHTML = args.user;
         	}
 		});
@@ -31,6 +33,8 @@
         			document.getElementById("signup").style.display = "none";
         			document.getElementById("logout").style.display = "block";
         			document.getElementById("profile").style.display = "block";
+        			document.getElementById("select").style.display = "block";
+        			document.getElementById("add").style.display = "block";
         			document.getElementById("profile").innerHTML = data.email;
 				}
 
@@ -43,6 +47,8 @@
     		document.getElementById("signup").style.display = "block";
     		document.getElementById("logout").style.display = "none";
     		document.getElementById("profile").style.display = "none";
+    		document.getElementById("select").style.display = "none";
+        	document.getElementById("add").style.display = "none";
 		};
 
 	}

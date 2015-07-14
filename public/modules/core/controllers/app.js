@@ -40,6 +40,14 @@ angular
         templateUrl: 'modules/decks/views/selectDeck.html',
         controller: 'decksController'
       })
+      .when('/create', {
+        templateUrl: 'modules/decks/views/createDeck.html',
+        controller: 'decksController'
+      })
+      .when('/import', {
+        templateUrl: 'modules/decks/views/createDeck.html',
+        controller: 'decksController'
+      })
       .otherwise({
         redirectTo: '/'
       });
