@@ -55,7 +55,7 @@ connection.connect(function(err){
       connection.query("SELECT * FROM `deck` LIMIT 1", function(err){
         if (err){
           console.log("sqlConnection - tableDeck:" + err);
-          connection.query(config.createDeclTable, function(err){
+          connection.query(config.createDeckTable, function(err){
               if (err){
                 console.log("sqlConnection - deckTableCreation:" + err);
               } else {
@@ -275,6 +275,55 @@ app.post('/loginCheck', function(req, res){
     res.send(true);     
     }  
   });
+});
+
+app.post('/getDeck', function(req,res){
+
+	var deck = new Object();
+
+	connection.query("SELECT * FROM `deck` WHERE `iduser` = '" + req.body.iduser + "' AND  `name` = '" + req.body.name + "'", function(err,rows){
+		if(err){
+			console.log("getDeck - getDeckName: " + err);
+			res.send(false);
+		} else if (!rows.length){
+			res.send(false);
+		} else {
+			console.log(rows);
+			console.log(rows[0]);
+			deck.id = rows[0].iddeck;
+			deck.name = req.body.name;
+			connection.query("SELECT * FROM `decklist` WHERE `iddeck` = '" + deck.id + "'", function(err,rows){
+				if(err){
+					console.log("getDeck - getDeckList: " + err);
+					res.send(false);
+				} else if (!rows.length){
+					console.log("getDeck - getDeckList: No cards found in deck");
+					res.send(false);
+				} else {
+					var deckList = "";
+					for (var i in rows) {
+						deckList = deckList + rows[i].idcard + ",";
+					}
+					deckList = deckList.substring(0, deckList.length - 1);
+
+					connection.query("SELECT * FROM `card` WHERE `idcard` IN ('" + deckList + "')", function(err,rows){
+						if(err){
+							console.log("getDeck - getCardList: " + err);
+							res.send(false);
+						} else if (!rows.length){
+							console.log("getDeck - getCardList: No cards found");
+							res.send(false);
+						} else {
+							for (var i in rows) {
+								deck.deckList[i] = rows[i];
+							}
+							res.send(deck);
+						}
+					});
+				}
+			});
+		}
+	});
 });
 
 

@@ -1,4 +1,16 @@
 <div class="jumbotron" ng-controller='decksController' ng-init="checkUser()">
 	<h1>Create a deck</h1>
-	<p>[[Not implemented]]</p>
+	<div class="alert alert-danger" style="display: none" id="errorMessage">[[Placeholder]]</div>
+<form role="form">
+  <div class="form-group">
+    <label for="name">Deck Name:</label>
+    <input type="name" class="form-control" id="name">
+  </div>
+  </form>
+  <label for="decklist">Deck List:</label>
+<div class="input-group">
+    <textarea class="form-control custom-control" rows="10" style="resize:none" id="decklist"></textarea>
+    <span class="input-group-addon btn btn-primary" style="color:white" ng-click="create()">Create</span>
+</div>
+
 </div>

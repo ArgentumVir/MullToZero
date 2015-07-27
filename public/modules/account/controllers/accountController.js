@@ -90,5 +90,15 @@ angular
     		errorMessage.style.display = "block";
     		errorMessage.innerHTML = errorString;
 		}
+
+		$scope.checkUser = function() {
+			$http.post('/authCheck').success(function(data) {
+				if(data){
+					// Logged in
+				} else {
+					window.location = '#/login';
+				}
+			});
+		};
 	}
 ]);
